@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Louisiana Land Loss: Interactive Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Georgia:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: Georgia, 'Times New Roman', serif;
+      overflow: hidden;
+      background: #f0f8ff;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: #87ceeb;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      image-rendering: pixelated;
+    }
+
+    .map-header {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(51, 51, 51, 0.95);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+    }
+
+    .map-header h1 {
+      margin: 0 0 10px 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .map-header p {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      opacity: 0.9;
+    }
+
+    .layer-controls {
+      display: none;
+    }
+
+    /* Smoother tile rendering */
+    .leaflet-tile {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      image-rendering: pixelated;
+      transition: opacity 0.3s ease;
+    }
+
+    .leaflet-fade-anim .leaflet-tile {
+      transition: opacity 0.3s ease;
+    }
+
+    /* Scale control styling */
+    .leaflet-control-scale {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border-radius: 4px !important;
+      border: 1px solid rgba(0, 0, 0, 0.2) !important;
+      font-family: Georgia, serif !important;
+    }
+
+    .leaflet-control-scale-line {
+      border: 2px solid #333 !important;
+      border-top: none !important;
+      color: #333 !important;
+      font-size: 11px !important;
+      line-height: 1.1 !important;
+      padding: 2px 5px 1px !important;
+      background: rgba(255, 255, 255, 0.8) !important;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      .map-header {
+        top: 10px;
+        right: 10px;
+        left: auto;
+        padding: 15px;
+        max-width: 300px;
+      }
+
+      .map-header h1 {
+        font-size: 1.3rem;
+      }
+
+      .map-header p {
+        font-size: 0.9rem;
+      }
+
+      .layer-controls {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .map-header {
+        padding: 12px;
+      }
+
+      .map-header h1 {
+        font-size: 1.2rem;
+      }
+
+      .layer-controls {
+        bottom: 50px;
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <div class="map-header">
+    <h1>Louisiana Land Loss</h1>
+    <p>Interactive map showing coastal land changes from 1932 to 2020. Pan and zoom to explore areas where Louisiana has lost over 1,900 square miles of land, including thousands of oil wells now submerged underwater.</p>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const tileBounds = L.latLngBounds([28.2, -91.5], [30.5, -87.5]);
+
+    // Initialize map with interactive controls enabled
+    const map = L.map('map', {
+      center: [29.3, -89.6],
+      zoom: 9,
+      zoomControl: true,
+      dragging: true,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
+      boxZoom: true,
+      touchZoom: true,
+      keyboard: true,
+      attributionControl: true,
+      fadeAnimation: true,
+      zoomAnimation: true,
+      markerZoomAnimation: true,
+      minZoom: 7,
+      maxZoom: 16
+    });
+
+    // Set strict bounds after map initialization to prevent panning outside tile area
+    map.setMaxBounds(tileBounds);
+    map.options.maxBoundsViscosity = 1.0;
+
+    // Add scale control to bottom left
+    L.control.scale({
+      position: 'bottomleft',
+      metric: true,
+      imperial: true,
+      maxWidth: 200,
+      updateWhenIdle: false
+    }).addTo(map);
+
+    // Create tile layers - Add 1932 layer first (bottom), then 2020 layer (top with heatmap)
+    const layer1932 = L.tileLayer('tiles/1932/{z}/{x}/{y}.png', {
+      opacity: 1.0,
+      minZoom: 6,
+      maxZoom: 16,
+      bounds: tileBounds,
+      errorTileUrl: '',
+    }).addTo(map);
+
+    const layer2020 = L.tileLayer('tiles/2020/{z}/{x}/{y}.png', {
+      opacity: 1.0,
+      minZoom: 6,
+      maxZoom: 16,
+      bounds: tileBounds,
+      errorTileUrl: '',
+    });
+
+    // Add 2020 layer after 1932 to ensure it appears on top
+    layer2020.addTo(map);
+
+    // Responsive map handling
+    function handleResize() {
+      map.invalidateSize();
+      
+      // Adjust view for mobile devices
+      if (window.innerWidth <= 768) {
+        map.setView([29.3, -89.6], Math.max(8, map.getZoom()));
+      }
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    // Add attribution
+    map.attributionControl.setPrefix('');
+    map.attributionControl.addAttribution('Louisiana Land Loss Data');
+
+    // Handle tile loading for better UX
+    let tilesLoading = 0;
+    
+    function showLoadingIndicator() {
+      // You could add a loading spinner here if desired
+    }
+    
+    function hideLoadingIndicator() {
+      // Hide loading spinner
+    }
+
+    [layer1932, layer2020].forEach(layer => {
+      layer.on('loading', function() {
+        tilesLoading++;
+        if (tilesLoading === 1) showLoadingIndicator();
+      });
+      
+      layer.on('load', function() {
+        tilesLoading--;
+        if (tilesLoading === 0) hideLoadingIndicator();
+      });
+    });
+
+  </script>
+</body>
+</html>
