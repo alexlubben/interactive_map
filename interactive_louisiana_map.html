@@ -146,12 +146,12 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const tileBounds = L.latLngBounds([28.2, -91.5], [30.5, -87.5]);
+    const tileBounds = L.latLngBounds([28.3044, -94.2188], [33.1376, -88.4179]);
 
     // Initialize map with interactive controls enabled
     const map = L.map('map', {
-      center: [29.3, -89.6],
-      zoom: 9,
+      center: [30.7, -91.3],
+      zoom: 7,
       zoomControl: true,
       dragging: true,
       scrollWheelZoom: true,
@@ -163,8 +163,8 @@
       fadeAnimation: true,
       zoomAnimation: true,
       markerZoomAnimation: true,
-      minZoom: 7,
-      maxZoom: 16
+      minZoom: 4,
+      maxZoom: 14
     });
 
     // Set strict bounds after map initialization to prevent panning outside tile area
@@ -180,25 +180,14 @@
       updateWhenIdle: false
     }).addTo(map);
 
-    // Create tile layers - Add 1932 layer first (bottom), then 2020 layer (top with heatmap)
-    const layer1932 = L.tileLayer('tiles/1932/{z}/{x}/{y}.png', {
+    // Create tile layer from local tiles
+    const tileLayer = L.tileLayer('tiles/{z}/{x}/{y}.png', {
       opacity: 1.0,
-      minZoom: 6,
-      maxZoom: 16,
+      minZoom: 4,
+      maxZoom: 14,
       bounds: tileBounds,
       errorTileUrl: '',
     }).addTo(map);
-
-    const layer2020 = L.tileLayer('tiles/2020/{z}/{x}/{y}.png', {
-      opacity: 1.0,
-      minZoom: 6,
-      maxZoom: 16,
-      bounds: tileBounds,
-      errorTileUrl: '',
-    });
-
-    // Add 2020 layer after 1932 to ensure it appears on top
-    layer2020.addTo(map);
 
     // Responsive map handling
     function handleResize() {
@@ -206,7 +195,7 @@
       
       // Adjust view for mobile devices
       if (window.innerWidth <= 768) {
-        map.setView([29.3, -89.6], Math.max(8, map.getZoom()));
+        map.setView([30.7, -91.3], Math.max(8, map.getZoom()));
       }
     }
 
@@ -227,7 +216,7 @@
       // Hide loading spinner
     }
 
-    [layer1932, layer2020].forEach(layer => {
+    [tileLayer].forEach(layer => {
       layer.on('loading', function() {
         tilesLoading++;
         if (tilesLoading === 1) showLoadingIndicator();
