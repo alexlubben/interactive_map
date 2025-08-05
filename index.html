@@ -203,8 +203,9 @@
 
     // Add attribution
     map.attributionControl.setPrefix('');
-    map.attributionControl.addAttribution('Louisiana Land Loss Data');
-
+map.attributionControl.addAttribution(
+  'Data from <a href="https://www.dnr.louisiana.gov/" target="_blank">Louisiana DENR</a> and <a href="https://pubs.usgs.gov/publication/sim3381" target="_blank">USGS</a>'
+);
     // Handle tile loading for better UX
     let tilesLoading = 0;
     
